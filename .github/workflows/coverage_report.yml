@@ -63,7 +63,8 @@ jobs:
         run: |
           TRACEFILE="$(bazel info output_path)/_coverage/_coverage_report.dat"
           EXECROOT="$(bazel info execution_root)"
-          EXTERNAL_HTML_DIR="cpp_coverage/${EXECROOT#/}/external"
+          EXECROOT_RELATIVE="${EXECROOT#/}"
+          EXTERNAL_HTML_DIR="cpp_coverage/${EXECROOT_RELATIVE}/external"
 
           if grep -qE '^SF:.*/external/' "$TRACEFILE"; then
             if [[ ! -d "$EXTERNAL_HTML_DIR" ]]; then
@@ -71,13 +72,13 @@ jobs:
               exit 1
             fi
 
-            external_index_count=$(find "$EXTERNAL_HTML_DIR" -name 'index.html' | wc -l)
-            if [[ "$external_index_count" -eq 0 ]]; then
+            EXTERNAL_INDEX_COUNT=$(find "$EXTERNAL_HTML_DIR" -name 'index.html' | wc -l)
+            if [[ "$EXTERNAL_INDEX_COUNT" -eq 0 ]]; then
               echo "::error::No external coverage index pages were generated in '$EXTERNAL_HTML_DIR'."
               exit 1
             fi
 
-            echo "Generated $external_index_count external coverage index page(s) under '$EXTERNAL_HTML_DIR'."
+            echo "Generated $EXTERNAL_INDEX_COUNT external coverage index page(s) under '$EXTERNAL_HTML_DIR'."
           fi
         shell: bash
       - name: Upload Coverage Artifacts
