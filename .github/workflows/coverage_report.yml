@@ -47,18 +47,43 @@ jobs:
           -//score/language/safecpp/aborts_upon_exception:abortsuponexception_toolchain_test
       - name: Generate HTML Coverage Report
         run: |
-          genhtml "$(bazel info output_path)/_coverage/_coverage_report.dat" \
+          TRACEFILE="$(bazel info output_path)/_coverage/_coverage_report.dat"
+          EXECROOT="$(bazel info execution_root)"
+
+          genhtml "$TRACEFILE" \
             -o=cpp_coverage \
             --show-details \
-            --source-directory="$(bazel info execution_root)" \
+            --source-directory="$EXECROOT" \
             --legend \
             --function-coverage \
             --branch-coverage \
             --ignore-errors negative
+        shell: bash
+      - name: Verify external coverage pages are generated
+        run: |
+          TRACEFILE="$(bazel info output_path)/_coverage/_coverage_report.dat"
+          EXECROOT="$(bazel info execution_root)"
+          EXTERNAL_HTML_DIR="cpp_coverage/${EXECROOT#/}/external"
+
+          if grep -qE '^SF:.*/external/' "$TRACEFILE"; then
+            if [[ ! -d "$EXTERNAL_HTML_DIR" ]]; then
+              echo "::error::Expected external coverage pages under '$EXTERNAL_HTML_DIR' but directory is missing."
+              exit 1
+            fi
+
+            external_index_count=$(find "$EXTERNAL_HTML_DIR" -name 'index.html' | wc -l)
+            if [[ "$external_index_count" -eq 0 ]]; then
+              echo "::error::No external coverage index pages were generated in '$EXTERNAL_HTML_DIR'."
+              exit 1
+            fi
+
+            echo "Generated $external_index_count external coverage index page(s) under '$EXTERNAL_HTML_DIR'."
+          fi
         shell: bash
       - name: Upload Coverage Artifacts
         uses: actions/upload-artifact@v6
         with:
           name: ${{ github.event.repository.name }}_cpp_coverage_report
           path: cpp_coverage/
+          include-hidden-files: true
           retention-days: 10
