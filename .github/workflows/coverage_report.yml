@@ -63,8 +63,8 @@ jobs:
         run: |
           TRACEFILE="$(bazel info output_path)/_coverage/_coverage_report.dat"
           EXECROOT="$(bazel info execution_root)"
-          EXECROOT_RELATIVE="${EXECROOT#/}"
-          EXTERNAL_HTML_DIR="cpp_coverage/${EXECROOT_RELATIVE}/external"
+          EXECROOT_NO_LEADING_SLASH="${EXECROOT#/}"
+          EXTERNAL_HTML_DIR="cpp_coverage/${EXECROOT_NO_LEADING_SLASH}/external"
 
           if grep -qE '^SF:.*/external/' "$TRACEFILE"; then
             if [[ ! -d "$EXTERNAL_HTML_DIR" ]]; then
@@ -72,7 +72,7 @@ jobs:
               exit 1
             fi
 
-            EXTERNAL_INDEX_COUNT=$(find "$EXTERNAL_HTML_DIR" -name 'index.html' | wc -l)
+            EXTERNAL_INDEX_COUNT=$(find "$EXTERNAL_HTML_DIR" -name 'index.html' | wc -l | tr -d '[:space:]')
             if [[ "$EXTERNAL_INDEX_COUNT" -eq 0 ]]; then
               echo "::error::No external coverage index pages were generated in '$EXTERNAL_HTML_DIR'."
               exit 1
